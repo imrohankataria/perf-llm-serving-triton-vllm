@@ -1,0 +1,16 @@
+apiVersion: v2
+name: vllm
+description: A Helm chart for deploying vLLM inference server on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.6.0"
+keywords:
+  - llm
+  - inference
+  - vllm
+  - machine-learning
+home: https://github.com/vllm-project/vllm
+sources:
+  - https://github.com/vllm-project/vllm
+maintainers:
+  - name: LLM Serving Benchmark Team

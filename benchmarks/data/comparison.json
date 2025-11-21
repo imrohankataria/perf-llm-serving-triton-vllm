@@ -1,0 +1,54 @@
+{
+  "timestamp": "2024-01-15T10:30:00Z",
+  "frameworks": [
+    {
+      "name": "vllm",
+      "throughput_rps": 850,
+      "p50_latency_ms": 28,
+      "p95_latency_ms": 45,
+      "p99_latency_ms": 62,
+      "success_rate": 0.998,
+      "tokens_per_second": 1280,
+      "cost_per_1m_tokens": 2.80
+    },
+    {
+      "name": "sglang",
+      "throughput_rps": 820,
+      "p50_latency_ms": 32,
+      "p95_latency_ms": 52,
+      "p99_latency_ms": 68,
+      "success_rate": 0.997,
+      "tokens_per_second": 1230,
+      "cost_per_1m_tokens": 2.95
+    },
+    {
+      "name": "triton-vllm",
+      "throughput_rps": 780,
+      "p50_latency_ms": 36,
+      "p95_latency_ms": 58,
+      "p99_latency_ms": 78,
+      "success_rate": 0.996,
+      "tokens_per_second": 1150,
+      "cost_per_1m_tokens": 3.20
+    },
+    {
+      "name": "tgi",
+      "throughput_rps": 680,
+      "p50_latency_ms": 45,
+      "p95_latency_ms": 72,
+      "p99_latency_ms": 95,
+      "success_rate": 0.995,
+      "tokens_per_second": 980,
+      "cost_per_1m_tokens": 3.85
+    }
+  ],
+  "test_configuration": {
+    "model": "meta-llama/Llama-2-7b-chat-hf",
+    "hardware": "8x NVIDIA A100 40GB",
+    "instance": "AWS p4d.24xlarge",
+    "input_tokens": 512,
+    "output_tokens": 128,
+    "duration_seconds": 600,
+    "concurrency": 100
+  }
+}

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: tgi
+description: A Helm chart for deploying HuggingFace Text Generation Inference server on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "2.0.0"
+keywords:
+  - llm
+  - inference
+  - tgi
+  - huggingface
+  - machine-learning
+home: https://github.com/huggingface/text-generation-inference
+sources:
+  - https://github.com/huggingface/text-generation-inference
+maintainers:
+  - name: LLM Serving Benchmark Team

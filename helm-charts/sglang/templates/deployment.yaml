@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sglang.fullname" . }}
+  labels:
+    {{- include "sglang.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sglang.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sglang.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: sglang
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+          - python3
+          - -m
+          - sglang.launch_server
+        args:
+          - --model-path
+          - {{ .Values.model.name }}
+          - --tp-size
+          - "{{ .Values.sglang.tensorParallelSize }}"
+          - --context-length
+          - "{{ .Values.sglang.contextLength }}"
+          - --mem-fraction-static
+          - "{{ .Values.sglang.memFractionStatic }}"
+          {{- if .Values.sglang.enableRadixCache }}
+          - --enable-radix-cache
+          {{- end }}
+          - --chunked-prefill-size
+          - "{{ .Values.sglang.chunkPrefillBudget }}"
+          - --max-running-requests
+          - "{{ .Values.sglang.maxRunningRequests }}"
+          - --schedule-conservativeness
+          - "{{ .Values.sglang.scheduleConservativeThreshold }}"
+          - --host
+          - "0.0.0.0"
+          - --port
+          - "{{ .Values.service.targetPort }}"
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- toYaml .Values.env | nindent 8 }}
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: model-storage
+          mountPath: {{ .Values.persistence.mountPath }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: {{ include "sglang.fullname" . }}-pvc
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
