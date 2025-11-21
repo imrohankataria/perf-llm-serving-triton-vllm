@@ -18,6 +18,18 @@ import numpy as np
 # Use non-interactive backend for server environments
 matplotlib.use('Agg')
 
+# Color palette for consistent chart styling
+COLORS = {
+    'vllm': '#2ecc71',
+    'sglang': '#3498db',
+    'triton-vllm': '#9b59b6',
+    'tgi': '#e74c3c',
+    'primary': '#3498db',
+    'secondary': '#e74c3c',
+    'tertiary': '#f39c12',
+    'quaternary': '#2ecc71'
+}
+
 
 def load_benchmark_data(data_file: str) -> dict:
     """Load benchmark data from JSON file."""
@@ -36,9 +48,9 @@ def plot_latency_comparison(data: dict, output_dir: Path):
     width = 0.25
     
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.bar(x - width, p50, width, label='P50', color='#3498db')
-    ax.bar(x, p95, width, label='P95', color='#e74c3c')
-    ax.bar(x + width, p99, width, label='P99', color='#f39c12')
+    ax.bar(x - width, p50, width, label='P50', color=COLORS['primary'])
+    ax.bar(x, p95, width, label='P95', color=COLORS['secondary'])
+    ax.bar(x + width, p99, width, label='P99', color=COLORS['tertiary'])
     
     ax.set_xlabel('Framework', fontsize=12, fontweight='bold')
     ax.set_ylabel('Latency (ms)', fontsize=12, fontweight='bold')
@@ -64,7 +76,8 @@ def plot_throughput_comparison(data: dict, output_dir: Path):
     frameworks, throughput = zip(*sorted_data)
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.barh(frameworks, throughput, color=['#2ecc71', '#3498db', '#9b59b6', '#e74c3c'])
+    colors_list = [COLORS.get(fw, COLORS['primary']) for fw in frameworks]
+    bars = ax.barh(frameworks, throughput, color=colors_list)
     
     ax.set_xlabel('Requests per Second', fontsize=12, fontweight='bold')
     ax.set_ylabel('Framework', fontsize=12, fontweight='bold')
@@ -93,8 +106,8 @@ def plot_cost_analysis(data: dict, output_dir: Path):
     frameworks, costs = zip(*sorted_data)
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    colors = ['#2ecc71', '#3498db', '#f39c12', '#e74c3c']
-    bars = ax.bar(frameworks, costs, color=colors)
+    colors_list = [COLORS['quaternary'], COLORS['primary'], COLORS['tertiary'], COLORS['secondary']]
+    bars = ax.bar(frameworks, costs, color=colors_list)
     
     ax.set_xlabel('Framework', fontsize=12, fontweight='bold')
     ax.set_ylabel('Cost per 1M Tokens ($)', fontsize=12, fontweight='bold')
@@ -122,9 +135,9 @@ def plot_performance_vs_cost(data: dict, output_dir: Path):
     
     fig, ax = plt.subplots(figsize=(10, 8))
     
-    colors = ['#2ecc71', '#3498db', '#9b59b6', '#e74c3c']
+    colors_list = [COLORS.get(fw, COLORS['primary']) for fw in frameworks]
     for i, (name, tp, cost) in enumerate(zip(frameworks, throughput, costs)):
-        ax.scatter(cost, tp, s=500, alpha=0.6, c=colors[i], edgecolors='black', linewidth=2)
+        ax.scatter(cost, tp, s=500, alpha=0.6, c=colors_list[i], edgecolors='black', linewidth=2)
         ax.annotate(name, (cost, tp), fontsize=12, fontweight='bold',
                    ha='center', va='center')
     
@@ -144,10 +157,14 @@ def plot_performance_vs_cost(data: dict, output_dir: Path):
 
 
 def plot_concurrency_scaling(output_dir: Path):
-    """Create a chart showing how throughput scales with concurrency."""
+    """Create a chart showing how throughput scales with concurrency.
+    
+    Note: This uses sample data for demonstration. Replace with actual
+    benchmark data for production use.
+    """
     concurrency_levels = [1, 10, 50, 100]
     
-    # Sample data based on the README
+    # Sample data for demonstration - replace with actual benchmark results
     data = {
         'vllm': [45, 420, 750, 850],
         'sglang': [42, 410, 730, 820],
@@ -157,12 +174,11 @@ def plot_concurrency_scaling(output_dir: Path):
     
     fig, ax = plt.subplots(figsize=(12, 7))
     
-    colors = {'vllm': '#2ecc71', 'sglang': '#3498db', 'triton-vllm': '#9b59b6', 'tgi': '#e74c3c'}
     markers = {'vllm': 'o', 'sglang': 's', 'triton-vllm': '^', 'tgi': 'D'}
     
     for framework, throughputs in data.items():
         ax.plot(concurrency_levels, throughputs, marker=markers[framework],
-                linewidth=2, markersize=10, label=framework, color=colors[framework])
+                linewidth=2, markersize=10, label=framework, color=COLORS.get(framework, COLORS['primary']))
     
     ax.set_xlabel('Concurrency Level', fontsize=12, fontweight='bold')
     ax.set_ylabel('Throughput (requests/sec)', fontsize=12, fontweight='bold')

@@ -49,12 +49,13 @@ class BenchmarkRunner:
         """Generate a prompt of approximately the specified token length."""
         # Rough approximation: 1 token ≈ 4 characters
         words = ["benchmark", "test", "performance", "evaluation", "llm", "inference", "server"]
-        prompt = "Summarize the following text:\n\n"
+        prompt_parts = ["Summarize the following text:\n\n"]
+        target_length = length * 4
         
-        while len(prompt) < length * 4:
-            prompt += random.choice(words) + " "
+        while len(' '.join(prompt_parts)) < target_length:
+            prompt_parts.append(random.choice(words))
         
-        return prompt[:length * 4]
+        return ' '.join(prompt_parts)[:target_length]
 
     def make_request(self) -> RequestMetrics:
         """Make a single request to the LLM endpoint."""
