@@ -1,0 +1,89 @@
+replicaCount: 1
+
+image:
+  repository: vllm/vllm-openai
+  pullPolicy: IfNotPresent
+  tag: "v0.6.0"
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: vllm.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    nvidia.com/gpu: 1
+    memory: 48Gi
+    cpu: 8
+  requests:
+    nvidia.com/gpu: 1
+    memory: 32Gi
+    cpu: 4
+
+model:
+  name: "meta-llama/Llama-2-7b-chat-hf"
+  downloadDir: "/models"
+  
+vllm:
+  # vLLM specific configurations
+  tensorParallelSize: 1
+  maxModelLen: 4096
+  gpuMemoryUtilization: 0.9
+  dtype: "float16"
+  enablePrefixCaching: true
+  maxNumBatchedTokens: 8192
+  maxNumSeqs: 256
+
+env:
+  - name: HUGGING_FACE_HUB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: huggingface-secret
+        key: token
+        optional: true
+
+nodeSelector:
+  accelerator: nvidia-tesla-a100
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+affinity: {}
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  mountPath: /models
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3

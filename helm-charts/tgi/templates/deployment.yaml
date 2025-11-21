@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tgi.fullname" . }}
+  labels:
+    {{- include "tgi.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tgi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tgi.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: tgi
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+          - --model-id
+          - {{ .Values.model.name }}
+          - --num-shard
+          - "{{ .Values.tgi.numShard }}"
+          - --max-concurrent-requests
+          - "{{ .Values.tgi.maxConcurrentRequests }}"
+          - --max-best-of
+          - "{{ .Values.tgi.maxBestOf }}"
+          - --max-stop-sequences
+          - "{{ .Values.tgi.maxStopSequences }}"
+          - --max-input-length
+          - "{{ .Values.tgi.maxInputLength }}"
+          - --max-total-tokens
+          - "{{ .Values.tgi.maxTotalTokens }}"
+          - --waiting-served-ratio
+          - "{{ .Values.tgi.waitingServedRatio }}"
+          - --max-batch-prefill-tokens
+          - "{{ .Values.tgi.maxBatchPrefillTokens }}"
+          - --max-batch-total-tokens
+          - "{{ .Values.tgi.maxBatchTotalTokens }}"
+          - --max-waiting-tokens
+          - "{{ .Values.tgi.maxWaitingTokens }}"
+          - --hostname
+          - {{ .Values.tgi.hostname }}
+          - --port
+          - "{{ .Values.tgi.port }}"
+          {{- if .Values.tgi.dtype }}
+          - --dtype
+          - {{ .Values.tgi.dtype }}
+          {{- end }}
+          {{- if .Values.tgi.quantize }}
+          - --quantize
+          - {{ .Values.tgi.quantize }}
+          {{- end }}
+          {{- if .Values.tgi.trustRemoteCode }}
+          - --trust-remote-code
+          {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- toYaml .Values.env | nindent 8 }}
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: model-storage
+          mountPath: {{ .Values.persistence.mountPath }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: {{ include "tgi.fullname" . }}-pvc
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

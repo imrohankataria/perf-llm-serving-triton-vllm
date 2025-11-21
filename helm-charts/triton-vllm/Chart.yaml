@@ -1,0 +1,19 @@
+apiVersion: v2
+name: triton-vllm
+description: A Helm chart for deploying NVIDIA Triton Inference Server with vLLM backend on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "24.08"
+keywords:
+  - llm
+  - inference
+  - triton
+  - vllm
+  - nvidia
+  - machine-learning
+home: https://github.com/triton-inference-server/server
+sources:
+  - https://github.com/triton-inference-server/server
+  - https://github.com/vllm-project/vllm
+maintainers:
+  - name: LLM Serving Benchmark Team

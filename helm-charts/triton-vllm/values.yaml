@@ -1,0 +1,103 @@
+replicaCount: 1
+
+image:
+  repository: nvcr.io/nvidia/tritonserver
+  pullPolicy: IfNotPresent
+  tag: "24.08-vllm-python-py3"
+
+service:
+  type: ClusterIP
+  httpPort: 8000
+  grpcPort: 8001
+  metricsPort: 8002
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: triton.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    nvidia.com/gpu: 1
+    memory: 48Gi
+    cpu: 8
+  requests:
+    nvidia.com/gpu: 1
+    memory: 32Gi
+    cpu: 4
+
+model:
+  name: "meta-llama/Llama-2-7b-chat-hf"
+  repository: "/models"
+  
+triton:
+  # Triton specific configurations
+  logVerbose: 1
+  strictModelConfig: false
+  exitOnError: false
+  minSupportedComputeCapability: 7.0
+  backendDirectory: "/opt/tritonserver/backends"
+  repoAgentDirectory: "/opt/tritonserver/repoagents"
+  
+vllm:
+  # vLLM backend configurations
+  tensorParallelSize: 1
+  dtype: "float16"
+  maxModelLen: 4096
+  gpuMemoryUtilization: 0.9
+  enablePrefixCaching: true
+  
+dynamicBatching:
+  enabled: true
+  maxQueueDelayMicroseconds: 100
+  preferredBatchSize: [8, 16, 32]
+  maxBatchSize: 64
+
+env:
+  - name: HUGGING_FACE_HUB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: huggingface-secret
+        key: token
+        optional: true
+
+nodeSelector:
+  accelerator: nvidia-tesla-a100
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+affinity: {}
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  mountPath: /models
+
+readinessProbe:
+  httpGet:
+    path: /v2/health/ready
+    port: 8000
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /v2/health/live
+    port: 8000
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3

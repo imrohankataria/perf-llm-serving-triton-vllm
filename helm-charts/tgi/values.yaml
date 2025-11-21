@@ -1,0 +1,97 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/huggingface/text-generation-inference
+  pullPolicy: IfNotPresent
+  tag: "2.0.0"
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: tgi.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    nvidia.com/gpu: 1
+    memory: 48Gi
+    cpu: 8
+  requests:
+    nvidia.com/gpu: 1
+    memory: 32Gi
+    cpu: 4
+
+model:
+  name: "meta-llama/Llama-2-7b-chat-hf"
+  downloadDir: "/data"
+  
+tgi:
+  # TGI specific configurations
+  numShard: 1
+  maxConcurrentRequests: 256
+  maxBestOf: 1
+  maxStopSequences: 4
+  maxInputLength: 1024
+  maxTotalTokens: 4096
+  waitingServedRatio: 1.2
+  maxBatchPrefillTokens: 4096
+  maxBatchTotalTokens: 8192
+  maxWaitingTokens: 20
+  hostname: "0.0.0.0"
+  port: 8080
+  dtype: "float16"
+  quantize: ""  # Options: bitsandbytes, gptq, awq, eetq
+  trustRemoteCode: false
+
+env:
+  - name: HUGGING_FACE_HUB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: huggingface-secret
+        key: token
+        optional: true
+
+nodeSelector:
+  accelerator: nvidia-tesla-a100
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+affinity: {}
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  mountPath: /data
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
